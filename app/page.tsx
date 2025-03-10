@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import WeatherCard from './components/WeatherCard';
-import { fetchWeatherData, getRandomCity, WeatherData } from './services/weatherService';
+import CitySearch from './components/CitySearch';
+import { fetchWeatherData, getRandomCity, WeatherData, City, fetchCities } from './services/weatherService';
 import Link from 'next/link';
 
 export default function Home() {
@@ -10,19 +11,36 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRandomCityWeather = async () => {
+  // 在组件加载时获取城市列表
+  useEffect(() => {
+    const initCities = async () => {
+      try {
+        await fetchCities();
+      } catch (error) {
+        console.error('初始化城市列表失败:', error);
+      }
+    };
+    
+    initCities();
+  }, []);
+
+  const fetchCityWeather = async (city: City) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const randomCity = getRandomCity();
-      const data = await fetchWeatherData(randomCity);
+      const data = await fetchWeatherData(city);
       setWeatherData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : '未知错误');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fetchRandomCityWeather = async () => {
+    const randomCity = getRandomCity();
+    await fetchCityWeather(randomCity);
   };
 
   useEffect(() => {
@@ -33,7 +51,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
       <header className="bg-white dark:bg-gray-800 shadow-sm py-4">
         <div className="container mx-auto px-4">
-          <h1 className="text-2xl font-bold text-center">全球天气随机展示</h1>
+          <h1 className="text-2xl font-bold text-center">全球天气查询</h1>
           <div className="flex justify-center mt-2">
             <Link 
               href="/openweather" 
@@ -45,7 +63,8 @@ export default function Home() {
         </div>
       </header>
       
-      <main className="flex-grow flex items-center justify-center p-4 sm:p-8">
+      <main className="flex-grow flex flex-col items-center justify-center p-4 sm:p-8">
+        <CitySearch onCitySelect={fetchCityWeather} />
         <WeatherCard 
           weatherData={weatherData}
           isLoading={isLoading}

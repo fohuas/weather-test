@@ -17,8 +17,8 @@ export interface WeatherData {
   icon?: string;
 }
 
-// 世界各地主要城市列表
-export const cities: City[] = [
+// 默认城市列表（作为备用）
+export const defaultCities: City[] = [
   { name: "北京", latitude: 39.9042, longitude: 116.4074, country: "中国" },
   { name: "上海", latitude: 31.2304, longitude: 121.4737, country: "中国" },
   { name: "广州", latitude: 23.1291, longitude: 113.2644, country: "中国" },
@@ -29,17 +29,31 @@ export const cities: City[] = [
   { name: "巴黎", latitude: 48.8566, longitude: 2.3522, country: "法国" },
   { name: "悉尼", latitude: 33.8688, longitude: 151.2093, country: "澳大利亚" },
   { name: "莫斯科", latitude: 55.7558, longitude: 37.6173, country: "俄罗斯" },
-  { name: "迪拜", latitude: 25.2048, longitude: 55.2708, country: "阿联酋" },
-  { name: "新加坡", latitude: 1.3521, longitude: 103.8198, country: "新加坡" },
-  { name: "曼谷", latitude: 13.7563, longitude: 100.5018, country: "泰国" },
-  { name: "开罗", latitude: 30.0444, longitude: 31.2357, country: "埃及" },
-  { name: "里约热内卢", latitude: -22.9068, longitude: -43.1729, country: "巴西" },
-  { name: "开普敦", latitude: -33.9249, longitude: 18.4241, country: "南非" },
-  { name: "墨西哥城", latitude: 19.4326, longitude: -99.1332, country: "墨西哥" },
-  { name: "柏林", latitude: 52.5200, longitude: 13.4050, country: "德国" },
-  { name: "罗马", latitude: 41.9028, longitude: 12.4964, country: "意大利" },
-  { name: "马德里", latitude: 40.4168, longitude: -3.7038, country: "西班牙" },
 ];
+
+// 存储从API获取的城市列表
+let cities: City[] = [...defaultCities];
+
+// 从API获取城市列表
+export async function fetchCities(): Promise<City[]> {
+  try {
+    const response = await fetch('/api/cities');
+    if (!response.ok) {
+      throw new Error('获取城市列表失败');
+    }
+    const data = await response.json();
+    cities = data.cities;
+    return cities;
+  } catch (error) {
+    console.error('获取城市列表时出错:', error);
+    return defaultCities; // 如果获取失败，返回默认城市列表
+  }
+}
+
+// 获取城市列表
+export function getCities(): City[] {
+  return cities;
+}
 
 // 获取随机城市
 export function getRandomCity(): City {

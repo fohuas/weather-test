@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { City, WeatherData, cities, fetchOpenWeatherMapData } from '../services/weatherService';
-import Image from 'next/image';
+import { City, WeatherData, fetchOpenWeatherMapData, fetchCities } from '../services/weatherService';
+import CitySearch from '../components/CitySearch';
 import Link from 'next/link';
 
 export default function OpenWeatherPage() {
@@ -12,7 +12,7 @@ export default function OpenWeatherPage() {
   const [error, setError] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState<string>('');
 
-  // 从环境变量获取API密钥
+  // 从环境变量获取API密钥并初始化城市列表
   useEffect(() => {
     // 在客户端，我们需要通过API获取环境变量
     const fetchApiKey = async () => {
@@ -28,12 +28,19 @@ export default function OpenWeatherPage() {
       }
     };
 
+    const initCities = async () => {
+      try {
+        await fetchCities();
+      } catch (error) {
+        console.error('初始化城市列表失败:', error);
+      }
+    };
+
     fetchApiKey();
+    initCities();
   }, []);
 
-  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const cityName = e.target.value;
-    const city = cities.find(c => c.name === cityName) || null;
+  const handleCitySelect = (city: City) => {
     setSelectedCity(city);
   };
 
@@ -64,20 +71,13 @@ export default function OpenWeatherPage() {
         
         <div className="bg-white/30 p-6 rounded-lg shadow-lg backdrop-blur-md w-full max-w-2xl mx-auto">
           <div className="mb-6">
-            <label htmlFor="city-select" className="block text-lg mb-2">选择城市:</label>
-            <select 
-              id="city-select"
-              className="w-full p-2 border border-gray-300 rounded-md bg-white/80"
-              onChange={handleCityChange}
-              value={selectedCity?.name || ''}
-            >
-              <option value="">-- 请选择城市 --</option>
-              {cities.map(city => (
-                <option key={`${city.name}-${city.country}`} value={city.name}>
-                  {city.name}, {city.country}
-                </option>
-              ))}
-            </select>
+            <label className="block text-lg mb-2">搜索城市:</label>
+            <CitySearch onCitySelect={handleCitySelect} />
+            {selectedCity && (
+              <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/30 rounded-md">
+                <p>已选择: <strong>{selectedCity.name}, {selectedCity.country}</strong></p>
+              </div>
+            )}
           </div>
 
           <button 
